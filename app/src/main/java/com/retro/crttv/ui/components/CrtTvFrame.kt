@@ -80,18 +80,17 @@ fun CrtTvChassis(
                     .fillMaxSize()
                     .then(
                         if (skinStyle.hasRedArcadeBorder) {
-                            Modifier.border(5.dp, Color(0xFFD50000), RoundedCornerShape(26.dp))
+                            Modifier.border(5.dp, Color(0xFFE50914), RoundedCornerShape(26.dp))
                         } else if (skinStyle.hasWoodgrainFinish) {
-                            Modifier.border(3.5.dp, Color(0xFF3E2723), RoundedCornerShape(24.dp))
+                            Modifier.border(4.dp, Color(0xFF5D4037), RoundedCornerShape(24.dp))
                         } else {
-                            Modifier.border(2.dp, Color(0xFF2A2A32), RoundedCornerShape(24.dp))
+                            Modifier.border(2.5.dp, Color(0xFF2C2C36), RoundedCornerShape(24.dp))
                         }
                     )
                     .shadow(24.dp, RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         brush = if (skinStyle.hasWoodgrainFinish) {
-                            // Rich walnut woodgrain cabinet finish for VHS skin
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color(0xFF3E2723),
@@ -102,7 +101,6 @@ fun CrtTvChassis(
                                 )
                             )
                         } else {
-                            // Molded matte cabinet for Classic, Arcade, News, Retro, Broken
                             Brush.radialGradient(
                                 colors = listOf(
                                     skinStyle.bezelOuterColor.copy(alpha = 0.98f),
@@ -113,7 +111,7 @@ fun CrtTvChassis(
                             )
                         }
                     )
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 // Realistic Chassis Vent Slots along top edge
                 TopVentilationSlots(
@@ -128,52 +126,57 @@ fun CrtTvChassis(
                 ChassisCornerScrew(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp))
                 ChassisCornerScrew(modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp))
 
-                // Left & Right Vertical Stereo Speaker Grilles
-                Row(
+                // Inner Cathode Tube Molded Bezel (Recessed)
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 2.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 6.dp, vertical = 6.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(skinStyle.bezelInnerColor)
+                        .border(2.5.dp, Color(0xFF131317), RoundedCornerShape(20.dp))
+                        .padding(4.dp)
                 ) {
-                    // Left Speaker Column
-                    SpeakerGrilleColumn(
-                        modifier = Modifier
-                            .width(10.dp)
-                            .padding(end = 4.dp)
-                    )
-
-                    // Inner Cathode Tube Molded Bezel (Recessed)
+                    // Glass CRT Display surface
                     Box(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(skinStyle.bezelInnerColor)
-                            .border(2.dp, Color(0xFF111115), RoundedCornerShape(18.dp))
-                            .padding(4.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.Black),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Glass CRT Display surface
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color.Black),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            screenContent()
+                        screenContent()
 
-                            // Cracked glass overlay for Broken TV skin
-                            if (skinStyle.hasCrackedGlass) {
-                                CrackedGlassCanvas(modifier = Modifier.fillMaxSize())
-                            }
+                        // Convex glass glare reflection across upper corner
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawArc(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.08f),
+                                        Color.White.copy(alpha = 0.03f),
+                                        Color.Transparent
+                                    ),
+                                    center = Offset(size.width * 0.25f, size.height * 0.15f),
+                                    radius = size.width * 0.55f
+                                ),
+                                startAngle = 0f,
+                                sweepAngle = 360f,
+                                useCenter = true
+                            )
+                        }
+
+                        // Cracked glass overlay for Broken TV skin
+                        if (skinStyle.hasCrackedGlass) {
+                            CrackedGlassCanvas(modifier = Modifier.fillMaxSize())
                         }
                     }
+                }
 
-                    // Right Speaker Column
-                    SpeakerGrilleColumn(
+                // Integrated bottom stereo speaker grille slats for Classic TV
+                if (skinStyle.skinDrawableRes == com.retro.crttv.R.drawable.tv_skin_classic) {
+                    SpeakerGrilleBar(
                         modifier = Modifier
-                            .width(10.dp)
-                            .padding(start = 4.dp)
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 1.dp)
                     )
                 }
 
@@ -230,66 +233,80 @@ fun SpeakerGrilleColumn(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun SpeakerGrilleBar(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(12) {
+            Box(
+                modifier = Modifier
+                    .width(8.dp)
+                    .height(2.5.dp)
+                    .clip(RoundedCornerShape(1.dp))
+                    .background(Color(0xFF08080A))
+                    .border(0.4.dp, Color(0xFF1E1E26), RoundedCornerShape(1.dp))
+            )
+        }
+    }
+}
+
+@Composable
 fun CrtTvTopHeader(
     skinStyle: TvSkinStyle,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Row(
         modifier = modifier
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF101014).copy(alpha = 0.85f))
-            .border(1.dp, Color(0xFF22222A), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // "CRT TV" in clean retro bold font + subtitle
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = skinStyle.badgeTitle,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Black,
-                    fontFamily = FontFamily.Monospace,
-                    color = CrtTextWarm,
-                    letterSpacing = 2.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+        // "CRT TV" in clean retro bold typography matching Screen 2, 3, 4
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = skinStyle.badgeTitle,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Monospace,
+                color = if (skinStyle.hasRetroSpeakerGrid) Color(0xFF322A20) else CrtTextWarm,
+                letterSpacing = 2.sp
+            )
+            if (skinStyle.badgeSubtitle.isNotEmpty() && !skinStyle.badgeSubtitle.startsWith("RETROVISION")) {
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = skinStyle.badgeSubtitle,
                     fontSize = 8.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = CrtTextMuted,
-                    letterSpacing = 0.8.sp
+                    color = if (skinStyle.hasRetroSpeakerGrid) Color(0xFF635645) else CrtTextMuted,
+                    letterSpacing = 0.5.sp
                 )
             }
+        }
 
-            // The 3 Slanted Diagonal RGB Stripes (Red, Green, Blue)
-            Canvas(modifier = Modifier.size(width = 30.dp, height = 13.dp)) {
-                val stripeWidth = 6f
-                val spacing = 9f
-                val slantOffset = 5.5f
-                val h = size.height
+        // The 3 Slanted Diagonal RGB Stripes (Red, Green, Blue)
+        Canvas(modifier = Modifier.size(width = 32.dp, height = 14.dp)) {
+            val stripeWidth = 6.5f
+            val spacing = 9.5f
+            val slantOffset = 6f
+            val h = size.height
 
-                val colors = listOf(
-                    Color(0xFFE53935), // Red
-                    Color(0xFF43A047), // Green
-                    Color(0xFF1E88E5)  // Blue
+            val colors = listOf(
+                Color(0xFFE53935), // Red
+                Color(0xFF43A047), // Green
+                Color(0xFF1E88E5)  // Blue
+            )
+
+            for (i in colors.indices) {
+                val startX = i * spacing + slantOffset
+                drawLine(
+                    color = colors[i],
+                    start = Offset(startX, 0f),
+                    end = Offset(startX - slantOffset, h),
+                    strokeWidth = stripeWidth
                 )
-
-                for (i in colors.indices) {
-                    val startX = i * spacing + slantOffset
-                    drawLine(
-                        color = colors[i],
-                        start = Offset(startX, 0f),
-                        end = Offset(startX - slantOffset, h),
-                        strokeWidth = stripeWidth
-                    )
-                }
             }
         }
     }

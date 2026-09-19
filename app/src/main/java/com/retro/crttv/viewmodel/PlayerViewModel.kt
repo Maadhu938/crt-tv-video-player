@@ -11,10 +11,12 @@ import com.retro.crttv.data.preferences.UserPreferencesRepository
 import com.retro.crttv.data.repository.VideoRepository
 import com.retro.crttv.player.Media3PlayerManager
 import com.retro.crttv.player.PlayerState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlayerViewModel(
     application: Application,
@@ -85,7 +87,16 @@ class PlayerViewModel(
             val cleanTitle = nextVideo.name.take(14)
             playerManager.showOsd(String.format("CH %02d: %s", nextIndex + 1, cleanTitle))
         } else {
-            playerManager.cycleChannel(1)
+            val currentCh = playerState.value.channel
+            val nextCh = if (currentCh >= 4) 1 else currentCh + 1
+            playerManager.setChannel(nextCh)
+            val label = when (nextCh) {
+                1 -> "COLOR BARS"
+                2 -> "NO SIGNAL"
+                3 -> "AV 1: NO INPUT"
+                else -> "TEST PATTERN"
+            }
+            playerManager.showOsd(String.format("CH %02d: %s", nextCh, label))
         }
         viewModelScope.launch {
             preferencesRepository.updateChannel(playerState.value.channel)
@@ -104,7 +115,16 @@ class PlayerViewModel(
             val cleanTitle = prevVideo.name.take(14)
             playerManager.showOsd(String.format("CH %02d: %s", prevIndex + 1, cleanTitle))
         } else {
-            playerManager.cycleChannel(-1)
+            val currentCh = playerState.value.channel
+            val prevCh = if (currentCh <= 1) 4 else currentCh - 1
+            playerManager.setChannel(prevCh)
+            val label = when (prevCh) {
+                1 -> "COLOR BARS"
+                2 -> "NO SIGNAL"
+                3 -> "AV 1: NO INPUT"
+                else -> "TEST PATTERN"
+            }
+            playerManager.showOsd(String.format("CH %02d: %s", prevCh, label))
         }
         viewModelScope.launch {
             preferencesRepository.updateChannel(playerState.value.channel)
@@ -113,16 +133,84 @@ class PlayerViewModel(
 
     fun onVolumeUp() {
         playerManager.adjustVolume(0.05f)
+        val volInt = ((playerState.value.volume) * 100).toInt()
+        playerManager.showOsd("VOL $volInt")
         viewModelScope.launch {
-            preferencesRepository.updateVolume((playerState.value.volume * 100).toInt())
+            preferencesRepository.updateVolume(volInt)
         }
     }
 
     fun onVolumeDown() {
         playerManager.adjustVolume(-0.05f)
+        val volInt = ((playerState.value.volume) * 100).toInt()
+        playerManager.showOsd("VOL $volInt")
         viewModelScope.launch {
-            preferencesRepository.updateVolume((playerState.value.volume * 100).toInt())
+            preferencesRepository.updateVolume(volInt)
         }
+    }
+
+    /**
+     * Plays an online video stream or YouTube link.
+     */
+    fun playOnlineStream(url: String) {
+        val trimmed = url.trim()
+        if (trimmed.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val streamUri = if (trimmed.contains("youtube.com") || trimmed.contains("youtu.be")) {
+                resolveYouTubeStreamUri(trimmed)
+            } else {
+                Uri.parse(trimmed)
+            }
+
+            withContext(Dispatchers.Main) {
+                if (streamUri != null) {
+                    playVideo(streamUri)
+                    playerManager.showOsd("CH ONLINE: STREAM")
+                } else {
+                    playerManager.showOsd("INVALID STREAM URL")
+                }
+            }
+        }
+    }
+
+    private fun resolveYouTubeStreamUri(youtubeUrl: String): Uri? {
+        val videoId = extractYouTubeVideoId(youtubeUrl) ?: return null
+        // Public high-reliability Invidious & Piped streaming endpoints for direct video stream resolution
+        val endpoints = listOf(
+            "https://inv.tux.pizza/api/v1/videos/$videoId",
+            "https://invidious.nerdvpn.de/api/v1/videos/$videoId",
+            "https://pipedapi.kavin.rocks/streams/$videoId"
+        )
+
+        for (endpoint in endpoints) {
+            try {
+                val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
+                    connectTimeout = 4000
+                    readTimeout = 4000
+                    setRequestProperty("User-Agent", "Mozilla/5.0")
+                }
+                if (conn.responseCode == 200) {
+                    val body = conn.inputStream.bufferedReader().readText()
+                    // Extract first playable stream URL (mp4 or hls)
+                    val urlRegex = Regex(""""url"\s*:\s*"([^"]+\.mp4[^"]*)"""")
+                    val match = urlRegex.find(body)
+                    if (match != null) {
+                        val streamUrl = match.groupValues[1].replace("\\/", "/")
+                        return Uri.parse(streamUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                // Try next endpoint
+            }
+        }
+        // Fallback: direct embed URI
+        return Uri.parse("https://www.youtube.com/watch?v=$videoId")
+    }
+
+    private fun extractYouTubeVideoId(url: String): String? {
+        val pattern = Regex("""(?:v=|\/|embed\/|shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})""")
+        return pattern.find(url)?.groupValues?.get(1)
     }
 
     fun togglePower() {

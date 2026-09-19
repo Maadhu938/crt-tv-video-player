@@ -56,8 +56,10 @@ fun TvControlPanel(
     onChannelUp: () -> Unit,
     onVolumeDown: () -> Unit,
     onVolumeUp: () -> Unit,
+    onMenuClick: () -> Unit = {},
     onInputClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    isRetroSkin: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -135,12 +137,17 @@ fun TvControlPanel(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Row of 2 Function Buttons: [ INPUT ] and [ SETTINGS ] (Swipe used for Menu)
+        // Row of 3 Function Buttons: [ MENU ] [ INPUT ] [ SETTINGS ] (Matches Screen 2, 3, 4 mockup)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            RealPushRectButton(
+                label = "MENU",
+                onClick = onMenuClick,
+                modifier = Modifier.weight(1f)
+            )
             RealPushRectButton(
                 label = "INPUT",
                 onClick = onInputClick,
@@ -155,26 +162,48 @@ fun TvControlPanel(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Bottom Row: Speaker Grille + Vintage Plate
+        // Bottom Row: Speaker Grille + Vintage Metal Plate
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Molded horizontal speaker slits
-            Column(
-                modifier = Modifier.width(160.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                repeat(6) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(1.5.dp))
-                            .background(CrtSpeakerSlit)
-                            .border(0.5.dp, Color(0xFF070709), RoundedCornerShape(1.5.dp))
-                    )
+            if (isRetroSkin) {
+                // Authentic 1980s Retro dot-matrix perforated speaker grille
+                Column(
+                    modifier = Modifier.padding(start = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    repeat(4) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            repeat(8) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF1B1713))
+                                        .border(0.5.dp, Color(0xFF0F0C0A), CircleShape)
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Molded horizontal speaker slits
+                Column(
+                    modifier = Modifier.width(160.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    repeat(6) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(1.5.dp))
+                                .background(CrtSpeakerSlit)
+                                .border(0.5.dp, Color(0xFF070709), RoundedCornerShape(1.5.dp))
+                        )
+                    }
                 }
             }
 

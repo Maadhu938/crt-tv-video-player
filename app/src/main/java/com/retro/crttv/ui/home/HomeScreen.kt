@@ -62,6 +62,8 @@ fun HomeScreen(
     val context = LocalContext.current
 
     var controlsVisible by remember { mutableStateOf(false) }
+    var showSourceDialog by remember { mutableStateOf(false) }
+    var showYouTubeDialog by remember { mutableStateOf(false) }
 
     val storagePermission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         android.Manifest.permission.READ_MEDIA_VIDEO
@@ -105,6 +107,37 @@ fun HomeScreen(
             delay(4500)
             controlsVisible = false
         }
+    }
+
+    // Source Selection Dialog (Local Device vs. Online Stream)
+    if (showSourceDialog) {
+        com.retro.crttv.ui.components.RetroInputSourceDialog(
+            onDismiss = { showSourceDialog = false },
+            onSelectLocal = {
+                val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+                    context,
+                    storagePermission
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                if (hasPerm) {
+                    videoPickerLauncher.launch(arrayOf("video/*"))
+                } else {
+                    permissionLauncher.launch(storagePermission)
+                }
+            },
+            onSelectStream = {
+                showYouTubeDialog = true
+            }
+        )
+    }
+
+    // Online Stream & YouTube Tuning Dialog
+    if (showYouTubeDialog) {
+        com.retro.crttv.ui.components.RetroYouTubeStreamDialog(
+            onDismiss = { showYouTubeDialog = false },
+            onTuneUrl = { url ->
+                viewModel.playOnlineStream(url)
+            }
+        )
     }
 
     // ModalNavigationDrawer with swipe gesture enabled!
@@ -155,8 +188,11 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             if (playerState.currentUri == null) {
-                                // Screen 2: NO SIGNAL STATIC
-                                CrtNoSignalStatic(channelLabel = "")
+                                // Screen 2: NO SIGNAL STATIC & MULTI-CHANNEL TEST PATTERNS (SMPTE / RF Noise / Blue Screen)
+                                CrtNoSignalStatic(
+                                    channel = playerState.channel,
+                                    channelLabel = String.format("CH %02d", playerState.channel)
+                                )
                             } else {
                                 // Screen 3 & 4: Video Playing directly on TextureView for 100% GPU shader blending!
                                 AndroidView(
@@ -199,7 +235,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(2.dp))
                     }
 
-                    // Physical TV controls: Real 3D molded buttons (POWER with jewel LED, CHANNEL rocker, VOLUME rocker, INPUT, SETTINGS)
+                    // Physical TV controls: Real 3D molded buttons (POWER with jewel LED, CHANNEL rocker, VOLUME rocker, MENU, INPUT, SETTINGS)
                     TvControlPanel(
                         isPoweredOn = playerState.isPoweredOn,
                         onPowerClick = { viewModel.togglePower() },
@@ -207,18 +243,10 @@ fun HomeScreen(
                         onChannelUp = { viewModel.onChannelUp() },
                         onVolumeDown = { viewModel.onVolumeDown() },
                         onVolumeUp = { viewModel.onVolumeUp() },
-                        onInputClick = {
-                            val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
-                                context,
-                                storagePermission
-                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                            if (hasPerm) {
-                                videoPickerLauncher.launch(arrayOf("video/*"))
-                            } else {
-                                permissionLauncher.launch(storagePermission)
-                            }
-                        },
-                        onSettingsClick = onNavigateToSettings
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onInputClick = { showSourceDialog = true },
+                        onSettingsClick = onNavigateToSettings,
+                        isRetroSkin = (activePreset == com.retro.crttv.crt.CrtPreset.RETRO)
                     )
                 }
             }
