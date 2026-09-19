@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Retro Antennas -->
+    <path
+        android:pathData="M38,28 L50,40 M70,28 L58,40"
+        android:strokeWidth="3"
+        android:strokeColor="#A0A0A5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M38,28 A2,2 0 1 1 38,27.9 M70,28 A2,2 0 1 1 70,27.9"
+        android:fillColor="#C0C0C8" />
+    
+    <!-- TV Outer Casing -->
+    <path
+        android:pathData="M24,40 H84 A6,6 0 0 1 90,46 V80 A6,6 0 0 1 84,86 H24 A6,6 0 0 1 18,80 V46 A6,6 0 0 1 24,40 Z"
+        android:fillColor="#24242A"
+        android:strokeWidth="2"
+        android:strokeColor="#3A3A42" />
+
+    <!-- CRT Curved Screen Bezel -->
+    <path
+        android:pathData="M26,45 C42,43 56,43 72,45 C74,56 74,70 72,81 C56,83 42,83 26,81 C24,70 24,56 26,45 Z"
+        android:fillColor="#0D110E"
+        android:strokeWidth="1.5"
+        android:strokeColor="#1F2420" />
+
+    <!-- Phosphor scanlines hint on screen -->
+    <path
+        android:pathData="M30,55 H68 M30,62 H68 M30,69 H68"
+        android:strokeWidth="1"
+        android:strokeColor="#224426" />
+
+    <!-- Small Control Knobs on Right Column -->
+    <path
+        android:pathData="M81,51 A3,3 0 1 1 81,50.9"
+        android:fillColor="#606068" />
+    <path
+        android:pathData="M81,61 A3,3 0 1 1 81,60.9"
+        android:fillColor="#606068" />
+    <!-- Speaker slits -->
+    <path
+        android:pathData="M78,71 H84 M78,74 H84 M78,77 H84"
+        android:strokeWidth="1.2"
+        android:strokeColor="#121215" />
+    <!-- LED indicator -->
+    <path
+        android:pathData="M81,81 A1.5,1.5 0 1 1 81,80.9"
+        android:fillColor="#39FF14" />
+</vector>

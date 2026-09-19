@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CrtTv" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/crt_chassis_dark</item>
+        <item name="android:navigationBarColor">@color/crt_chassis_dark</item>
+        <item name="android:windowBackground">@color/crt_chassis_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Outer Glow -->
+    <path
+        android:pathData="M20,20 H100 V100 H20 Z"
+        android:fillColor="#0D1F12" />
+    <!-- TV Tube -->
+    <path
+        android:pathData="M24,24 H96 A8,8 0 0 1 104,32 V88 A8,8 0 0 1 96,96 H24 A8,8 0 0 1 16,88 V32 A8,8 0 0 1 24,24 Z"
+        android:fillColor="#1A1D1A"
+        android:strokeWidth="3"
+        android:strokeColor="#2F3630" />
+    <!-- Curved Glass Screen -->
+    <path
+        android:pathData="M28,34 C60,30 60,30 92,34 C95,58 95,62 92,86 C60,90 60,90 28,86 C25,62 25,58 28,34 Z"
+        android:fillColor="#0B130E"
+        android:strokeWidth="2"
+        android:strokeColor="#1E3824" />
+    <!-- RGB Phosphor Dots / Mini Badge -->
+    <path
+        android:pathData="M52,56 A4,4 0 1 1 52,55.9"
+        android:fillColor="#FF3333" />
+    <path
+        android:pathData="M60,56 A4,4 0 1 1 60,55.9"
+        android:fillColor="#33FF33" />
+    <path
+        android:pathData="M68,56 A4,4 0 1 1 68,55.9"
+        android:fillColor="#3366FF" />
+</vector>

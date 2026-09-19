@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CRT TV</string>
+    <string name="tagline">Videos feel better in the old days.</string>
+    <string name="no_signal">NO SIGNAL</string>
+    <string name="power">POWER</string>
+    <string name="ch_down">CH -</string>
+    <string name="ch_up">CH +</string>
+    <string name="vol_down">VOL -</string>
+    <string name="vol_up">VOL +</string>
+    <string name="input">INPUT</string>
+    <string name="menu">MENU</string>
+    <string name="settings">SETTINGS</string>
+    <string name="select_video">+ Select Video</string>
+    <string name="play">PLAY</string>
+    <string name="pause">PAUSE</string>
+    <string name="stop">STOP</string>
+    <string name="rewind">REW</string>
+    <string name="fast_forward">FFWD</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="crt_chassis_dark">#121214</color>
+    <color name="crt_chassis_mid">#1E1E22</color>
+    <color name="crt_chassis_light">#2A2A30</color>
+    <color name="crt_bezel_outer">#18181B</color>
+    <color name="crt_bezel_inner">#0D0D0F</color>
+    <color name="crt_screen_glass">#0A0D0B</color>
+    
+    <color name="crt_osd_green">#33FF33</color>
+    <color name="crt_osd_green_dim">#1B991B</color>
+    <color name="crt_osd_amber">#FFB000</color>
+    <color name="crt_text_warm">#E6E4DD</color>
+    <color name="crt_text_muted">#8A8882</color>
+
+    <color name="led_green_active">#2CD44A</color>
+    <color name="led_red_standby">#E63946</color>
+</resources>
