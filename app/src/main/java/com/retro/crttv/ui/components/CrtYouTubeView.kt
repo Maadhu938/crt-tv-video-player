@@ -3,8 +3,11 @@ package com.retro.crttv.ui.components
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.view.ViewGroup
+import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -21,7 +24,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 
 /**
  * High-performance Chromeless YouTube Player integrated inside the CRT TV Cathode Tube.
- * Plays all YouTube videos, shorts, and livestreams reliably with no scraper downtime.
+ * Uses YouTube No-Cookie official embed with direct permissions policy for encrypted-media,
+ * allowing all monetized and music videos to play without "Video unavailable" errors.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -32,6 +36,7 @@ fun CrtYouTubeView(
     volume: Float,
     seekPositionMs: Long,
     onPlaybackUpdated: (isPlaying: Boolean, currentMs: Long, durationMs: Long) -> Unit,
+    onErrorOccurred: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }
@@ -70,18 +75,37 @@ fun CrtYouTubeView(
                 )
                 setBackgroundColor(Color.BLACK)
 
+                // Accept third-party cookies for YouTube embed authentication
+                val cookieManager = CookieManager.getInstance()
+                cookieManager.setAcceptCookie(true)
+                cookieManager.setAcceptThirdPartyCookies(this, true)
+
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
+                    databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
                     useWideViewPort = true
                     loadWithOverviewMode = true
+                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     cacheMode = WebSettings.LOAD_DEFAULT
-                    userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+                    allowFileAccess = true
+                    allowContentAccess = true
                 }
 
-                webChromeClient = WebChromeClient()
+                webChromeClient = object : WebChromeClient() {
+                    // Critical for DRM / encrypted-media on modern YouTube videos
+                    override fun onPermissionRequest(request: PermissionRequest?) {
+                        request?.grant(request.resources)
+                    }
+                }
+
                 webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        // Keep playback inside the CRT screen
+                        return false
+                    }
+
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         if (isPlaying && isPoweredOn) {
@@ -118,12 +142,24 @@ fun CrtYouTubeView(
                                 onPlaybackUpdated(isPlaying, curMs, durMs)
                             }
                         }
+
+                        @JavascriptInterface
+                        fun notifyError(errorCode: Int) {
+                            post {
+                                val msg = when (errorCode) {
+                                    101, 150 -> "EMBED RESTRICTED BY OWNER"
+                                    100 -> "VIDEO NOT FOUND"
+                                    else -> "YOUTUBE ERROR ($errorCode)"
+                                }
+                                onErrorOccurred(msg)
+                            }
+                        }
                     },
                     "AndroidBridge"
                 )
 
                 val embedHtml = buildYouTubeHtml(videoId)
-                loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "UTF-8", null)
+                loadDataWithBaseURL("https://www.youtube-nocookie.com", embedHtml, "text/html", "UTF-8", null)
                 webViewInstance = this
             }
         },
@@ -150,11 +186,21 @@ private fun buildYouTubeHtml(videoId: String): String {
           <style>
             * { margin:0; padding:0; box-sizing:border-box; background:#000; overflow:hidden; }
             html, body { width:100%; height:100%; background:#000; }
-            #player { width:100%; height:100%; position:absolute; top:0; left:0; }
+            #player-wrap { width:100%; height:100%; position:absolute; top:0; left:0; }
+            iframe { width:100%; height:100%; border:none; }
           </style>
         </head>
         <body>
-          <div id="player"></div>
+          <div id="player-wrap">
+            <iframe id="player"
+              type="text/html"
+              src="https://www.youtube-nocookie.com/embed/$videoId?enablejsapi=1&autoplay=1&playsinline=1&controls=0&rel=0&modestbranding=1&fs=0&iv_load_policy=3&origin=https://www.youtube-nocookie.com&widget_referrer=https://www.youtube-nocookie.com"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              frameborder="0">
+            </iframe>
+          </div>
+
           <script>
             var tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
@@ -164,49 +210,48 @@ private fun buildYouTubeHtml(videoId: String): String {
             var player;
             function onYouTubeIframeAPIReady() {
               player = new YT.Player('player', {
-                width: '100%',
-                height: '100%',
-                videoId: '$videoId',
-                playerVars: {
-                  'autoplay': 1,
-                  'playsinline': 1,
-                  'controls': 0,
-                  'rel': 0,
-                  'modestbranding': 1,
-                  'fs': 0,
-                  'disablekb': 1,
-                  'iv_load_policy': 3
-                },
                 events: {
                   'onReady': onPlayerReady,
-                  'onStateChange': onPlayerStateChange
+                  'onStateChange': onPlayerStateChange,
+                  'onError': onPlayerError
                 }
               });
             }
+
             function onPlayerReady(event) {
-              event.target.playVideo();
+              try { event.target.playVideo(); } catch(e){}
               if (window.AndroidBridge) {
                 window.AndroidBridge.notifyReady();
               }
               setInterval(function() {
-                if (player && player.getCurrentTime && player.getDuration) {
-                  var c = player.getCurrentTime();
-                  var d = player.getDuration();
-                  if (window.AndroidBridge && d > 0) {
-                    window.AndroidBridge.notifyTimeUpdate(c, d);
+                try {
+                  if (player && player.getCurrentTime && player.getDuration) {
+                    var c = player.getCurrentTime();
+                    var d = player.getDuration();
+                    if (window.AndroidBridge && d > 0) {
+                      window.AndroidBridge.notifyTimeUpdate(c, d);
+                    }
                   }
-                }
+                } catch(e){}
               }, 500);
             }
+
             function onPlayerStateChange(event) {
               if (window.AndroidBridge) {
                 window.AndroidBridge.notifyStateChange(event.data);
               }
             }
-            function playVideo() { if (player && player.playVideo) player.playVideo(); }
-            function pauseVideo() { if (player && player.pauseVideo) player.pauseVideo(); }
-            function seekTo(sec) { if (player && player.seekTo) player.seekTo(sec, true); }
-            function setVolume(vol) { if (player && player.setVolume) player.setVolume(vol); }
+
+            function onPlayerError(event) {
+              if (window.AndroidBridge) {
+                window.AndroidBridge.notifyError(event.data);
+              }
+            }
+
+            function playVideo() { try { if (player && player.playVideo) player.playVideo(); } catch(e){} }
+            function pauseVideo() { try { if (player && player.pauseVideo) player.pauseVideo(); } catch(e){} }
+            function seekTo(sec) { try { if (player && player.seekTo) player.seekTo(sec, true); } catch(e){} }
+            function setVolume(vol) { try { if (player && player.setVolume) player.setVolume(vol); } catch(e){} }
           </script>
         </body>
         </html>

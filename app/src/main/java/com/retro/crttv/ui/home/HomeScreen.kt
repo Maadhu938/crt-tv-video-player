@@ -202,6 +202,9 @@ fun HomeScreen(
                                     onPlaybackUpdated = { isPlaying, curMs, durMs ->
                                         viewModel.updateYouTubePlayback(isPlaying, curMs, durMs)
                                     },
+                                    onErrorOccurred = { errorMsg ->
+                                        viewModel.playerManager.showOsd(errorMsg)
+                                    },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             } else if (playerState.currentUri != null) {
