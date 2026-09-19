@@ -17,7 +17,9 @@ data class PlayerState(
     val osdMessage: String? = "AV 1",
     val osdTimestamp: Long = System.currentTimeMillis(),
     val isPoweredOn: Boolean = true,
-    val isEnded: Boolean = false
+    val isEnded: Boolean = false,
+    val seekEventId: Long = 0L,
+    val userSeekTargetMs: Long = 0L
 ) {
     val progress: Float
         get() = if (durationMs > 0L) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f

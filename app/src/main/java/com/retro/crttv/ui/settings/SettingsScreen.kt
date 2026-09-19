@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ import com.retro.crttv.viewmodel.SettingsViewModel
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBackClick: () -> Unit,
+    onNavigateToPresets: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val crtSettings by viewModel.crtSettings.collectAsState()
@@ -146,6 +148,41 @@ fun SettingsScreen(
                         isSelected = activePreset == preset,
                         onClick = { viewModel.applyPreset(preset) },
                         modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Interactive CRT Test Tube Preview Button
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xFF142418))
+                    .border(1.dp, Color(0xFF2E633B), RoundedCornerShape(6.dp))
+                    .clickable { onNavigateToPresets() }
+                    .padding(vertical = 10.dp, horizontal = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = "Test Tube",
+                        tint = com.retro.crttv.ui.theme.CrtPhosphorGreen,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "PREVIEW & TEST PRESETS IN CRT TUBE ▶",
+                        fontSize = 11.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = com.retro.crttv.ui.theme.CrtPhosphorGreen,
+                        letterSpacing = 1.sp
                     )
                 }
             }

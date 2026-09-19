@@ -9,6 +9,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,17 @@ class Media3PlayerManager(
     private val coroutineScope: CoroutineScope
 ) {
     val player: ExoPlayer by lazy {
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                15_000,
+                50_000,
+                1_000,
+                2_000
+            )
+            .build()
+
         ExoPlayer.Builder(context)
+            .setLoadControl(loadControl)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
@@ -183,7 +194,13 @@ class Media3PlayerManager(
 
     fun seekTo(positionMs: Long) {
         if (_playerState.value.youtubeVideoId != null) {
-            _playerState.update { it.copy(currentPositionMs = positionMs) }
+            _playerState.update {
+                it.copy(
+                    seekEventId = System.currentTimeMillis(),
+                    userSeekTargetMs = positionMs,
+                    currentPositionMs = positionMs
+                )
+            }
             return
         }
         val clamped = positionMs.coerceIn(0L, player.duration.coerceAtLeast(0L))
@@ -194,7 +211,13 @@ class Media3PlayerManager(
     fun rewind() {
         if (_playerState.value.youtubeVideoId != null) {
             val newPos = (_playerState.value.currentPositionMs - 10000L).coerceAtLeast(0L)
-            _playerState.update { it.copy(currentPositionMs = newPos) }
+            _playerState.update {
+                it.copy(
+                    seekEventId = System.currentTimeMillis(),
+                    userSeekTargetMs = newPos,
+                    currentPositionMs = newPos
+                )
+            }
             showOsd("REW <<")
             return
         }
@@ -207,7 +230,13 @@ class Media3PlayerManager(
     fun fastForward() {
         if (_playerState.value.youtubeVideoId != null) {
             val newPos = (_playerState.value.currentPositionMs + 10000L).coerceAtMost(_playerState.value.durationMs)
-            _playerState.update { it.copy(currentPositionMs = newPos) }
+            _playerState.update {
+                it.copy(
+                    seekEventId = System.currentTimeMillis(),
+                    userSeekTargetMs = newPos,
+                    currentPositionMs = newPos
+                )
+            }
             showOsd("FFWD >>")
             return
         }

@@ -198,7 +198,8 @@ fun HomeScreen(
                                     isPlaying = playerState.isPlaying,
                                     isPoweredOn = playerState.isPoweredOn,
                                     volume = playerState.volume,
-                                    seekPositionMs = playerState.currentPositionMs,
+                                    seekEventId = playerState.seekEventId,
+                                    userSeekTargetMs = playerState.userSeekTargetMs,
                                     onPlaybackUpdated = { isPlaying, curMs, durMs ->
                                         viewModel.updateYouTubePlayback(isPlaying, curMs, durMs)
                                     },

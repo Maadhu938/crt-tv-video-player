@@ -34,13 +34,13 @@ fun CrtYouTubeView(
     isPlaying: Boolean,
     isPoweredOn: Boolean,
     volume: Float,
-    seekPositionMs: Long,
+    seekEventId: Long,
+    userSeekTargetMs: Long,
     onPlaybackUpdated: (isPlaying: Boolean, currentMs: Long, durationMs: Long) -> Unit,
     onErrorOccurred: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }
-    var lastSeekTarget by remember { mutableStateOf(-1L) }
 
     // React to Play / Pause state
     LaunchedEffect(isPlaying, isPoweredOn) {
@@ -57,11 +57,10 @@ fun CrtYouTubeView(
         webViewInstance?.evaluateJavascript("setVolume($volInt);", null)
     }
 
-    // React to Seek / Rewind / Fast-Forward
-    LaunchedEffect(seekPositionMs) {
-        if (seekPositionMs >= 0 && seekPositionMs != lastSeekTarget) {
-            lastSeekTarget = seekPositionMs
-            val sec = seekPositionMs / 1000f
+    // React ONLY to explicit user Seek / Rewind / Fast-Forward requests
+    LaunchedEffect(seekEventId) {
+        if (seekEventId > 0L && userSeekTargetMs >= 0L) {
+            val sec = userSeekTargetMs / 1000f
             webViewInstance?.evaluateJavascript("seekTo($sec);", null)
         }
     }
@@ -91,6 +90,9 @@ fun CrtYouTubeView(
                     cacheMode = WebSettings.LOAD_DEFAULT
                     allowFileAccess = true
                     allowContentAccess = true
+                    // Strip "; wv" so YouTube recognizes standard Chrome Mobile, preventing embed restrictions
+                    val defaultUa = userAgentString
+                    userAgentString = defaultUa.replace("; wv", "")
                 }
 
                 webChromeClient = object : WebChromeClient() {
@@ -159,7 +161,7 @@ fun CrtYouTubeView(
                 )
 
                 val embedHtml = buildYouTubeHtml(videoId)
-                loadDataWithBaseURL("https://www.youtube-nocookie.com", embedHtml, "text/html", "UTF-8", null)
+                loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "UTF-8", "https://www.youtube.com")
                 webViewInstance = this
             }
         },
@@ -194,7 +196,7 @@ private fun buildYouTubeHtml(videoId: String): String {
           <div id="player-wrap">
             <iframe id="player"
               type="text/html"
-              src="https://www.youtube-nocookie.com/embed/$videoId?enablejsapi=1&autoplay=1&playsinline=1&controls=0&rel=0&modestbranding=1&fs=0&iv_load_policy=3&origin=https://www.youtube-nocookie.com&widget_referrer=https://www.youtube-nocookie.com"
+              src="https://www.youtube.com/embed/$videoId?enablejsapi=1&autoplay=1&playsinline=1&controls=0&rel=0&modestbranding=1&fs=0&iv_load_policy=3&origin=https://www.youtube.com&widget_referrer=https://www.youtube.com"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowfullscreen
               frameborder="0">
@@ -233,7 +235,7 @@ private fun buildYouTubeHtml(videoId: String): String {
                     }
                   }
                 } catch(e){}
-              }, 500);
+              }, 1000);
             }
 
             function onPlayerStateChange(event) {

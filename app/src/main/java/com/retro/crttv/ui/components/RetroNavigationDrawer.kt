@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -108,6 +109,16 @@ fun RetroDrawerContent(
             selected = currentRoute == "library",
             onClick = {
                 onNavigate("library")
+                onCloseDrawer()
+            }
+        )
+
+        MockupDrawerRow(
+            icon = Icons.Default.Tv,
+            label = "CRT Presets",
+            selected = currentRoute == "presets",
+            onClick = {
+                onNavigate("presets")
                 onCloseDrawer()
             }
         )

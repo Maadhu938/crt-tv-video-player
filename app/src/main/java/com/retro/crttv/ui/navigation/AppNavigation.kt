@@ -70,6 +70,7 @@ fun AppNavigation(
         composable(NavRoutes.Settings.route) {
             SettingsScreen(
                 viewModel = settingsViewModel,
+                onNavigateToPresets = { navController.navigate(NavRoutes.Presets.route) },
                 onBackClick = { navController.popBackStack() }
             )
         }

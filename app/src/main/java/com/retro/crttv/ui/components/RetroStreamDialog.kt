@@ -3,6 +3,8 @@ package com.retro.crttv.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -216,10 +218,12 @@ fun RetroYouTubeStreamDialog(
     var urlText by remember { mutableStateOf("") }
 
     val quickPresets = listOf(
-        Pair("📼 80s Synthwave Chill", "https://www.youtube.com/watch?v=M576uG_J-g0"),
-        Pair("🌆 24/7 Retro Lo-Fi Radio", "https://www.youtube.com/watch?v=jfKfPfyJRdk"),
-        Pair("📺 80s City Pop (Plastic Love)", "https://www.youtube.com/watch?v=5wRWNiZ-gI8"),
-        Pair("🎬 Big Buck Bunny (Direct HD MP4)", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+        Pair("🎬 [STREAM] Big Buck Bunny HD", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
+        Pair("🚀 [STREAM] Tears of Steel Sci-Fi", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"),
+        Pair("🐘 [STREAM] Elephants Dream 3D", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"),
+        Pair("📼 [YOUTUBE] David Hasselhoff - True Survivor", "https://www.youtube.com/watch?v=ZTidn2dBYbY"),
+        Pair("🐰 [YOUTUBE] Big Buck Bunny 4K (Open Movie)", "https://www.youtube.com/watch?v=aqz-KE-bpKQ"),
+        Pair("🕹️ [YOUTUBE] Sintel Animation (Open Movie)", "https://www.youtube.com/watch?v=eRsGyueVLvQ")
     )
 
     Dialog(onDismissRequest = onDismiss) {
@@ -236,7 +240,9 @@ fun RetroYouTubeStreamDialog(
                 .padding(18.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header
