@@ -5,6 +5,8 @@ import com.retro.crttv.crt.AspectRatioMode
 
 data class PlayerState(
     val currentUri: Uri? = null,
+    val youtubeVideoId: String? = null,
+    val isOnlineStream: Boolean = false,
     val isPlaying: Boolean = false,
     val durationMs: Long = 0L,
     val currentPositionMs: Long = 0L,

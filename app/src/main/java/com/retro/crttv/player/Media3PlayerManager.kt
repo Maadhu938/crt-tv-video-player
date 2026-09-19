@@ -95,6 +95,8 @@ class Media3PlayerManager(
         _playerState.update {
             it.copy(
                 currentUri = uri,
+                youtubeVideoId = null,
+                isOnlineStream = false,
                 currentPositionMs = startPositionMs,
                 isPlaying = true,
                 isEnded = false
@@ -103,21 +105,64 @@ class Media3PlayerManager(
         showOsd("PLAY ▶")
     }
 
-    fun play() {
-        if (_playerState.value.isEnded) {
-            player.seekTo(0)
+    fun playYouTube(videoId: String) {
+        player.stop()
+        _playerState.update {
+            it.copy(
+                youtubeVideoId = videoId,
+                currentUri = null,
+                isOnlineStream = true,
+                isPlaying = true,
+                isEnded = false
+            )
         }
+        showOsd("CH ONLINE: YOUTUBE")
+    }
+
+    fun updateYouTubePlayback(isPlaying: Boolean, currentMs: Long, totalMs: Long) {
+        _playerState.update {
+            it.copy(
+                isPlaying = isPlaying,
+                currentPositionMs = currentMs,
+                durationMs = totalMs
+            )
+        }
+    }
+
+    fun play() {
+        if (_playerState.value.youtubeVideoId != null) {
+            _playerState.update { it.copy(isPlaying = true, isEnded = false) }
+            showOsd("PLAY ▶")
+            return
+        }
+        val uri = _playerState.value.currentUri
+        if (player.playbackState == Player.STATE_IDLE && uri != null) {
+            player.setMediaItem(MediaItem.fromUri(uri))
+            player.seekTo(_playerState.value.currentPositionMs)
+            player.prepare()
+        } else if (player.playbackState == Player.STATE_ENDED || _playerState.value.isEnded) {
+            player.seekTo(0)
+            player.prepare()
+        }
+        player.playWhenReady = true
         player.play()
+        _playerState.update { it.copy(isPlaying = true, isEnded = false) }
         showOsd("PLAY ▶")
     }
 
     fun pause() {
+        if (_playerState.value.youtubeVideoId != null) {
+            _playerState.update { it.copy(isPlaying = false) }
+            showOsd("PAUSE ❚❚")
+            return
+        }
         player.pause()
+        _playerState.update { it.copy(isPlaying = false) }
         showOsd("PAUSE ❚❚")
     }
 
     fun togglePlayPause() {
-        if (player.isPlaying) {
+        if (_playerState.value.isPlaying) {
             pause()
         } else {
             play()
@@ -125,18 +170,34 @@ class Media3PlayerManager(
     }
 
     fun stop() {
-        player.stop()
-        _playerState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
+        if (_playerState.value.youtubeVideoId != null) {
+            _playerState.update { it.copy(isPlaying = false, currentPositionMs = 0L, isEnded = false) }
+            showOsd("STOP ■")
+            return
+        }
+        player.pause()
+        player.seekTo(0)
+        _playerState.update { it.copy(isPlaying = false, currentPositionMs = 0L, isEnded = false) }
         showOsd("STOP ■")
     }
 
     fun seekTo(positionMs: Long) {
+        if (_playerState.value.youtubeVideoId != null) {
+            _playerState.update { it.copy(currentPositionMs = positionMs) }
+            return
+        }
         val clamped = positionMs.coerceIn(0L, player.duration.coerceAtLeast(0L))
         player.seekTo(clamped)
         _playerState.update { it.copy(currentPositionMs = clamped) }
     }
 
     fun rewind() {
+        if (_playerState.value.youtubeVideoId != null) {
+            val newPos = (_playerState.value.currentPositionMs - 10000L).coerceAtLeast(0L)
+            _playerState.update { it.copy(currentPositionMs = newPos) }
+            showOsd("REW <<")
+            return
+        }
         val newPos = (player.currentPosition - 10000L).coerceAtLeast(0L)
         player.seekTo(newPos)
         _playerState.update { it.copy(currentPositionMs = newPos) }
@@ -144,6 +205,12 @@ class Media3PlayerManager(
     }
 
     fun fastForward() {
+        if (_playerState.value.youtubeVideoId != null) {
+            val newPos = (_playerState.value.currentPositionMs + 10000L).coerceAtMost(_playerState.value.durationMs)
+            _playerState.update { it.copy(currentPositionMs = newPos) }
+            showOsd("FFWD >>")
+            return
+        }
         val newPos = (player.currentPosition + 10000L).coerceAtMost(player.duration.coerceAtLeast(0L))
         player.seekTo(newPos)
         _playerState.update { it.copy(currentPositionMs = newPos) }

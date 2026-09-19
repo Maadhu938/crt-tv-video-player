@@ -216,9 +216,10 @@ fun RetroYouTubeStreamDialog(
     var urlText by remember { mutableStateOf("") }
 
     val quickPresets = listOf(
-        Pair("📼 80s Anime Vibe", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
-        Pair("🌆 Synthwave Radio", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"),
-        Pair("📺 90s Commercials", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4")
+        Pair("📼 80s Synthwave Chill Stream", "https://www.youtube.com/watch?v=4xDzrJKXOOY"),
+        Pair("🌆 Retro Anime Lo-Fi Radio", "https://www.youtube.com/watch?v=jfKfPfyJRdk"),
+        Pair("📺 90s Commercials VHS Nostalgia", "https://www.youtube.com/watch?v=k3_tw44QsZQ"),
+        Pair("🎬 Big Buck Bunny (Direct HD MP4)", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
     )
 
     Dialog(onDismissRequest = onDismiss) {

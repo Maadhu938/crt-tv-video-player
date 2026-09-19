@@ -47,7 +47,9 @@ fun AppNavigation(
                 viewModel = playerViewModel,
                 onNavigateToLibrary = { navController.navigate(NavRoutes.Library.route) },
                 onNavigateToSettings = { navController.navigate(NavRoutes.Settings.route) },
-                onNavigateToPresets = { navController.navigate(NavRoutes.Presets.route) }
+                onNavigateToPresets = { navController.navigate(NavRoutes.Presets.route) },
+                onNavigateToHelp = { navController.navigate(NavRoutes.Help.route) },
+                onNavigateToAbout = { navController.navigate(NavRoutes.About.route) }
             )
         }
 
@@ -60,7 +62,8 @@ fun AppNavigation(
                         popUpTo(NavRoutes.Home.route) { inclusive = true }
                     }
                 },
-                onNavigateToSettings = { navController.navigate(NavRoutes.Settings.route) }
+                onNavigateToSettings = { navController.navigate(NavRoutes.Settings.route) },
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -77,6 +80,18 @@ fun AppNavigation(
                 onApplyPreset = { preset ->
                     settingsViewModel.applyPreset(preset)
                 },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.Help.route) {
+            com.retro.crttv.ui.help.HelpScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.About.route) {
+            com.retro.crttv.ui.about.AboutScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }

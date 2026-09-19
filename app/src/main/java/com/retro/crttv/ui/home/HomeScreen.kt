@@ -52,6 +52,8 @@ fun HomeScreen(
     onNavigateToLibrary: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToPresets: () -> Unit,
+    onNavigateToHelp: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val playerState by viewModel.playerState.collectAsState()
@@ -153,6 +155,8 @@ fun HomeScreen(
                         "library", "library_favorites" -> onNavigateToLibrary()
                         "settings" -> onNavigateToSettings()
                         "presets" -> onNavigateToPresets()
+                        "help" -> onNavigateToHelp()
+                        "about" -> onNavigateToAbout()
                     }
                 },
                 onCloseDrawer = { scope.launch { drawerState.close() } }
@@ -175,7 +179,7 @@ fun HomeScreen(
                                             controlsVisible = !controlsVisible
                                         },
                                         onDoubleTap = { offset ->
-                                            if (playerState.currentUri != null) {
+                                            if (playerState.currentUri != null || playerState.youtubeVideoId != null) {
                                                 if (offset.x < size.width / 2) {
                                                     viewModel.rewind()
                                                 } else {
@@ -187,13 +191,20 @@ fun HomeScreen(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (playerState.currentUri == null) {
-                                // Screen 2: NO SIGNAL STATIC & MULTI-CHANNEL TEST PATTERNS (SMPTE / RF Noise / Blue Screen)
-                                CrtNoSignalStatic(
-                                    channel = playerState.channel,
-                                    channelLabel = String.format("CH %02d", playerState.channel)
+                            if (playerState.youtubeVideoId != null) {
+                                // Screen: YouTube Video Playing inside the CRT Screen Cabinet!
+                                com.retro.crttv.ui.components.CrtYouTubeView(
+                                    videoId = playerState.youtubeVideoId!!,
+                                    isPlaying = playerState.isPlaying,
+                                    isPoweredOn = playerState.isPoweredOn,
+                                    volume = playerState.volume,
+                                    seekPositionMs = playerState.currentPositionMs,
+                                    onPlaybackUpdated = { isPlaying, curMs, durMs ->
+                                        viewModel.updateYouTubePlayback(isPlaying, curMs, durMs)
+                                    },
+                                    modifier = Modifier.fillMaxSize()
                                 )
-                            } else {
+                            } else if (playerState.currentUri != null) {
                                 // Screen 3 & 4: Video Playing directly on TextureView for 100% GPU shader blending!
                                 AndroidView(
                                     factory = { ctx ->
@@ -206,6 +217,12 @@ fun HomeScreen(
                                         }
                                     },
                                     modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                // Screen 2: NO SIGNAL STATIC & MULTI-CHANNEL TEST PATTERNS (SMPTE / RF Noise / Blue Screen)
+                                CrtNoSignalStatic(
+                                    channel = playerState.channel,
+                                    channelLabel = String.format("CH %02d", playerState.channel)
                                 )
                             }
 
@@ -221,7 +238,7 @@ fun HomeScreen(
             bottomControls = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Playback Controls Row (Screen 4) - appears when tapped
-                    if (playerState.currentUri != null) {
+                    if (playerState.currentUri != null || playerState.youtubeVideoId != null) {
                         CrtControlsOverlay(
                             isVisible = controlsVisible,
                             playerState = playerState,

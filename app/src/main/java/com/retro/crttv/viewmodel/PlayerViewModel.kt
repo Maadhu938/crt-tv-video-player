@@ -156,61 +156,33 @@ class PlayerViewModel(
         val trimmed = url.trim()
         if (trimmed.isEmpty()) return
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val streamUri = if (trimmed.contains("youtube.com") || trimmed.contains("youtu.be")) {
-                resolveYouTubeStreamUri(trimmed)
-            } else {
-                Uri.parse(trimmed)
-            }
+        val youtubeId = extractYouTubeVideoId(trimmed)
+        if (youtubeId != null) {
+            playerManager.playYouTube(youtubeId)
+            return
+        }
 
-            withContext(Dispatchers.Main) {
-                if (streamUri != null) {
-                    playVideo(streamUri)
-                    playerManager.showOsd("CH ONLINE: STREAM")
-                } else {
-                    playerManager.showOsd("INVALID STREAM URL")
-                }
-            }
+        // Direct stream (MP4, HLS, MKV, etc.)
+        try {
+            val uri = Uri.parse(trimmed)
+            playVideo(uri)
+            playerManager.showOsd("CH ONLINE: STREAM")
+        } catch (e: Exception) {
+            playerManager.showOsd("INVALID STREAM URL")
         }
     }
 
-    private fun resolveYouTubeStreamUri(youtubeUrl: String): Uri? {
-        val videoId = extractYouTubeVideoId(youtubeUrl) ?: return null
-        // Public high-reliability Invidious & Piped streaming endpoints for direct video stream resolution
-        val endpoints = listOf(
-            "https://inv.tux.pizza/api/v1/videos/$videoId",
-            "https://invidious.nerdvpn.de/api/v1/videos/$videoId",
-            "https://pipedapi.kavin.rocks/streams/$videoId"
-        )
-
-        for (endpoint in endpoints) {
-            try {
-                val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
-                    connectTimeout = 4000
-                    readTimeout = 4000
-                    setRequestProperty("User-Agent", "Mozilla/5.0")
-                }
-                if (conn.responseCode == 200) {
-                    val body = conn.inputStream.bufferedReader().readText()
-                    // Extract first playable stream URL (mp4 or hls)
-                    val urlRegex = Regex(""""url"\s*:\s*"([^"]+\.mp4[^"]*)"""")
-                    val match = urlRegex.find(body)
-                    if (match != null) {
-                        val streamUrl = match.groupValues[1].replace("\\/", "/")
-                        return Uri.parse(streamUrl)
-                    }
-                }
-            } catch (e: Exception) {
-                // Try next endpoint
-            }
-        }
-        // Fallback: direct embed URI
-        return Uri.parse("https://www.youtube.com/watch?v=$videoId")
+    fun updateYouTubePlayback(isPlaying: Boolean, currentMs: Long, durationMs: Long) {
+        playerManager.updateYouTubePlayback(isPlaying, currentMs, durationMs)
     }
 
     private fun extractYouTubeVideoId(url: String): String? {
-        val pattern = Regex("""(?:v=|\/|embed\/|shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})""")
-        return pattern.find(url)?.groupValues?.get(1)
+        val trimmed = url.trim()
+        if (trimmed.length == 11 && trimmed.matches(Regex("^[a-zA-Z0-9_-]{11}$"))) {
+            return trimmed
+        }
+        val pattern = Regex("""(?:v=|\/|embed\/|shorts\/|youtu\.be\/|live\/)([a-zA-Z0-9_-]{11})""")
+        return pattern.find(trimmed)?.groupValues?.get(1)
     }
 
     fun togglePower() {

@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
@@ -72,6 +73,7 @@ fun VideoLibraryScreen(
     viewModel: LibraryViewModel,
     onVideoSelected: (Uri) -> Unit,
     onNavigateToSettings: () -> Unit,
+    onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -109,13 +111,12 @@ fun VideoLibraryScreen(
         }
     }
 
-    // SAF Document/Media Picker (Fallback / Direct folder browse)
+    // SAF File Picker Launcher
     val videoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenMultipleDocuments()
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            viewModel.onVideosPicked(uris)
-            onVideoSelected(uris.first())
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            onVideoSelected(uri)
         }
     }
 
@@ -134,20 +135,30 @@ fun VideoLibraryScreen(
             .displayCutoutPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Top Bar: "CRT TV" on left, Rescan + Settings gear icon on right
+        // Top Bar: Back arrow + "VIDEO LIBRARY", Rescan + Settings gear icon on right
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "CRT TV",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace,
-                color = CrtTextWarm,
-                letterSpacing = 2.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back to TV",
+                        tint = CrtTextWarm
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "VIDEO LIBRARY",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = FontFamily.Monospace,
+                    color = CrtTextWarm,
+                    letterSpacing = 1.5.sp
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = {
